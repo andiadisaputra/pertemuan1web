@@ -1,45 +1,24 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\MahasiswaController;
 
-// GET - Daftar mahasiswa
-Route::get('/mahasiswa', function () {
-    $data = [
-        ['id' => 1, 'nama' => 'Andi Adi Saputra',   'jurusan' => 'Informatika'],
-        ['id' => 2, 'nama' => 'Budi Santoso',    'jurusan' => 'Sistem Informasi'],
-        ['id' => 3, 'nama' => 'Citra Dewi',      'jurusan' => 'Teknik Komputer'],
-    ];
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Data mahasiswa berhasil diambil',
-        'data'    => $data,
-    ], 200);
-});
+Route::apiResource('mahasiswa', MahasiswaController::class);
+Route::post('register', 'App\Http\Controllers\AuthController@register');
+Route::post('login',    'App\Http\Controllers\AuthController@login');
 
-// GET - Detail mahasiswa berdasarkan ID
-Route::get('/mahasiswa/{id}', function ($id) {
-    return response()->json([
-        'status'  => 'success',
-        'message' => "Detail mahasiswa ID: $id",
-        'data'    => [
-            'id'      => (int)$id,
-            'nama'    => 'Andi Saputra',
-            'jurusan' => 'Informatika',
-            'angkatan'=> 2022,
-        ],
-    ], 200);
-});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('categories', 'App\Http\Controllers\CategoryController')
+        ->except(['destroy']);
 
-// POST - Tambah mahasiswa
-Route::post('/mahasiswa', function (Request $request) {
-    return response()->json([
-        'status'  => 'success',
-        'message' => 'Mahasiswa berhasil ditambahkan',
-        'data'    => [
-            'id'      => rand(10, 99),
-            'nama'    => $request->nama,
-            'jurusan' => $request->jurusan,
-        ],
-    ], 200);
+    Route::delete('categories/{category}',
+        'App\Http\Controllers\CategoryController@destroy')
+        ->middleware('role:admin');
+
+    Route::apiResource('items', 'App\Http\Controllers\ItemController')
+        ->except(['destroy']);
+
+    Route::delete('items/{item}',
+        'App\Http\Controllers\ItemController@destroy')
+        ->middleware('role:admin');
 });
