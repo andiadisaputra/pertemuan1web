@@ -7,12 +7,19 @@ use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
-    public function index()
-    {
-        return response()->json(
-            Item::with('category')->get()
-        );
-    }
+   public function index(Request $request)
+{
+$query = Item::with('category');
+
+if ($request->filled('category_id')) {
+    $query->where('category_id', $request->category_id);
+}
+
+return response()->json(
+    $query->get()
+);
+
+}
 
     public function store(Request $request)
     {
