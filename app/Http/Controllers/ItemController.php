@@ -3,40 +3,50 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Services\ItemService;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
-public function index(Request $request)
-{
-    $request->validate([
-        'category_id' => 'nullable|integer'
-    ]);
+    protected $itemService;
 
-    $query = Item::with('category');
-
-    if ($request->filled('category_id')) {
-        $query->where('category_id', $request->category_id);
+    public function __construct(ItemService $itemService)
+    {
+        $this->itemService = $itemService;
     }
 
-    return response()->json($query->get());
-}
-
-    public function store(Request $request)
+    public function index(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'quantity' => 'required|integer|min:0',
-            'price' => 'required|numeric|min:0',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'nullable|integer'
         ]);
 
-        $item = Item::create(
-            $request->only('name', 'quantity', 'price', 'category_id')
-        );
+        $query = Item::with('category');
 
-        return response()->json($item, 201);
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        return response()->json($query->get());
     }
+
+    public function store(Request $request)
+{
+    dd($request->all());
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'quantity' => 'required|integer|min:0',
+        'price' => 'required|numeric|min:0',
+        'category_id' => 'required|exists:categories,id',
+    ]);
+
+    $item = Item::create(
+        $request->only('name', 'quantity', 'price', 'category_id')
+    );
+
+    return response()->json($item, 201);
+}
 
     public function show($id)
     {
@@ -56,7 +66,8 @@ public function index(Request $request)
             'category_id' => 'sometimes|exists:categories,id',
         ]);
 
-        $item->update(
+        $item = $this->itemService->update(
+            $item,
             $request->only('name', 'quantity', 'price', 'category_id')
         );
 
@@ -65,8 +76,12 @@ public function index(Request $request)
 
     public function destroy($id)
     {
-        Item::destroy($id);
+        $item = Item::findOrFail($id);
 
-        return response()->json(null, 204);
+        $this->itemService->delete($item);
+
+        return response()->json([
+            'message' => 'Item deleted successfully'
+        ]);
     }
 }
